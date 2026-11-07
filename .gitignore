@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*
+source-*.html
+qa/
+*Header-transcode.mp4
+.vscode/
+Thumbs.db
+.DS_Store
