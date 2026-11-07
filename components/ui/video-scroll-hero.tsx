@@ -22,7 +22,6 @@ export function VideoScrollHero({
   const [scaleProgress, setScaleProgress] = useState(0);
   const [opacity, setOpacity] = useState(1);
   const [windowDims, setWindowDims] = useState({ width: 0, height: 0 });
-  const hasAutoScrolled = useRef(false);
 
   // Track window dimensions for responsive card sizing
   useEffect(() => {
@@ -49,36 +48,40 @@ export function VideoScrollHero({
   useEffect(() => {
     if (!enableAnimations || shouldReduceMotion) return;
 
+    let ticking = false;
     const handleScroll = () => {
-      if (!containerRef.current) return;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (!containerRef.current) {
+            ticking = false;
+            return;
+          }
 
-      const rect = containerRef.current.getBoundingClientRect();
-      const containerHeight = containerRef.current.offsetHeight;
-      const windowHeight = window.innerHeight;
+          const rect = containerRef.current.getBoundingClientRect();
+          const containerHeight = containerRef.current.offsetHeight;
+          const windowHeight = window.innerHeight;
 
-      const scrolled = Math.max(0, -rect.top);
-      const maxScroll = containerHeight - windowHeight;
-      const progress = Math.min(Math.max(scrolled / maxScroll, 0), 1);
+          const scrolled = Math.max(0, -rect.top);
+          const maxScroll = containerHeight - windowHeight;
+          const progress =
+            maxScroll > 0
+              ? Math.min(Math.max(scrolled / maxScroll, 0), 1)
+              : 0;
 
-      // ── Phase 1 (0 → 70%): scale 16:9 card up to full screen ──
-      const sProgress = Math.min(progress / 0.7, 1);
-      setScaleProgress(sProgress);
+          // ── Phase 1 (0 → 65%): scale 16:9 card up to full screen ──
+          const sProgress = Math.min(progress / 0.65, 1);
+          setScaleProgress(sProgress);
 
-      // ── Phase 2 (70% → 100%): hold full-screen, fade to black ──
-      const fadeProgress = Math.max(0, (progress - 0.7) / 0.3);
-      setOpacity(1 - fadeProgress);
+          // ── Phase 2 (65% → 95%): hold full-screen, fade to black ──
+          const fadeProgress = Math.min(
+            Math.max((progress - 0.65) / 0.3, 0),
+            1
+          );
+          setOpacity(1 - fadeProgress);
 
-      // ── Auto-scroll to next section when fully faded ──
-      if (fadeProgress >= 1 && !hasAutoScrolled.current) {
-        hasAutoScrolled.current = true;
-        const nextSectionTop =
-          containerRef.current.offsetTop + containerRef.current.offsetHeight;
-        window.scrollTo({ top: nextSectionTop, behavior: "smooth" });
-      }
-
-      // Reset when scrolling back up so user can replay
-      if (progress < 0.65) {
-        hasAutoScrolled.current = false;
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
@@ -129,15 +132,15 @@ export function VideoScrollHero({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Scroll container — responsive height for mobile thumb-scroll vs desktop */}
+      {/* Scroll container — natural fluid scroll height that never traps or blocks scrolling */}
       <div
         ref={containerRef}
-        className="relative h-[220vh] sm:h-[300vh]"
+        className="relative h-[180vh] sm:h-[240vh]"
         style={{ background: "var(--ink)" }}
       >
-        {/* Sticky viewport — adapts dynamically to mobile browser address bars via 100dvh */}
+        {/* Sticky viewport — pointer-events-none ensures all mobile touches pass through directly */}
         <div
-          className="sticky top-0 w-full h-[100dvh] overflow-hidden flex items-center justify-center p-4 sm:p-8"
+          className="sticky top-0 w-full h-[100dvh] overflow-hidden flex items-center justify-center pointer-events-none"
           style={{ background: "var(--ink)" }}
         >
           {/* Responsive 16:9 Card that scales to cover the full viewport */}
