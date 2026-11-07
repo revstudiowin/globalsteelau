@@ -946,7 +946,6 @@ export default function HomePage() {
       {/* 2. Video scroll reveal — directly after hero */}
       <VideoScrollHero
         videoSrc="/assets/hero-video.mp4"
-        startScale={0.3}
       />
 
       {/* 3. Credentials bar */}
